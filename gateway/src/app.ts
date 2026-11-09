@@ -57,38 +57,47 @@ export function createApp({ cfg, store, paypal, settlement }: Deps) {
     res.status(201).json({ ok: true });
   });
 
-  // ---- PayPal Orders v2: load a balance ----
+  // ---- PayPal Orders v2: load a balance (one checkout can fund several wallets) ----
   app.post('/api/rooms/:room/orders', limit('orders', 20), async (req, res) => {
     const room = withRoom(req);
-    const { wallet, amountCents } = req.body ?? {};
-    if (!room.wallets.has(wallet)) throw new HttpError(400, 'register the wallet first');
-    if (!Number.isSafeInteger(amountCents) || amountCents < 100 || amountCents > cfg.maxLoadCents) {
-      throw new HttpError(400, `amountCents must be between 100 and ${cfg.maxLoadCents}`);
+    const raw = Array.isArray(req.body?.allocations) ? req.body.allocations : [{ wallet: req.body?.wallet, amountCents: req.body?.amountCents }];
+    if (raw.length < 1 || raw.length > 10) throw new HttpError(400, 'allocations: 1 to 10 wallets');
+    const allocations: { wallet: string; amountCents: number }[] = [];
+    for (const a of raw) {
+      if (!room.wallets.has(a?.wallet)) throw new HttpError(400, 'register every wallet first');
+      if (!Number.isSafeInteger(a.amountCents) || a.amountCents < 100 || a.amountCents > cfg.maxLoadCents) {
+        throw new HttpError(400, `each amountCents must be between 100 and ${cfg.maxLoadCents}`);
+      }
+      if (allocations.some((x) => x.wallet === a.wallet)) throw new HttpError(400, 'duplicate wallet');
+      allocations.push({ wallet: a.wallet, amountCents: a.amountCents });
     }
+    const amountCents = allocations.reduce((s, a) => s + a.amountCents, 0);
+    const names = allocations.map((a) => room.wallets.get(a.wallet)!.name).join(', ');
     const order = await paypal.createOrder({
       amountCents,
-      customId: `${room.id}:${shortId(wallet)}`,
-      description: `MeshTab offline balance for ${room.wallets.get(wallet)!.name}`,
+      customId: `${room.id}:${allocations.length}`,
+      description: `MeshTab offline balance: ${names}`.slice(0, 127),
       requestId: `mt-order-${newId(8)}`,
     });
-    room.orders.set(order.id, { orderId: order.id, wallet, amountCents, status: order.status, captureId: null, cert: null, createdAt: Date.now() });
-    res.status(201).json({ id: order.id, status: order.status });
+    room.orders.set(order.id, { orderId: order.id, allocations, amountCents, status: order.status, captureId: null, certs: [], createdAt: Date.now() });
+    res.status(201).json({ id: order.id, status: order.status, amountCents });
   });
 
   app.post('/api/rooms/:room/orders/:orderId/capture', limit('capture', 20), async (req, res) => {
     const room = withRoom(req);
     const rec = room.orders.get(String(req.params.orderId));
     if (!rec) throw new HttpError(404, 'order not found in this room');
-    if (rec.cert) { res.json({ cert: rec.cert, order: { id: rec.orderId, status: rec.status } }); return; }
+    if (rec.certs.length) { res.json({ certs: rec.certs, order: { id: rec.orderId, status: rec.status, captureId: rec.captureId } }); return; }
     const cap = await paypal.captureOrder(rec.orderId, `mt-capture-${rec.orderId}`);
     rec.status = cap.status;
     rec.captureId = cap.captureId;
     if (cap.status !== 'COMPLETED' || cap.captureStatus !== 'COMPLETED' || cap.amountCents !== rec.amountCents) {
       throw new HttpError(402, `PayPal capture not completed (${cap.status}/${cap.captureStatus})`);
     }
-    // PayPal has the money: sign the offline load certificate.
-    rec.cert = issueLoadCert({ wallet: rec.wallet, amount: rec.amountCents, loadId: rec.orderId }, cfg.gateway);
-    res.json({ cert: rec.cert, order: { id: rec.orderId, status: rec.status, captureId: rec.captureId } });
+    // PayPal has the money: sign one offline load certificate per funded wallet.
+    rec.certs = rec.allocations.map((a, i) =>
+      issueLoadCert({ wallet: a.wallet, amount: a.amountCents, loadId: `${rec.orderId}-${i + 1}` }, cfg.gateway));
+    res.json({ certs: rec.certs, order: { id: rec.orderId, status: rec.status, captureId: rec.captureId } });
   });
 
   // ---- Sync: any phone uploads every voucher it has seen ----
@@ -172,7 +181,7 @@ export function createApp({ cfg, store, paypal, settlement }: Deps) {
       name: settlement.nameOf(room, p.payer), wallet: shortId(p.payer), loaded: p.cap / 100, spent: p.claimedTotal / 100,
       payable: (p.payableTotal + p.settledTotal) / 100, shortfall: p.uncoveredTotal / 100, forks: p.forks.length, frozen: p.frozen,
     }));
-    res.json({ rows, payers, proposals: [...room.proposals.values()], orders: [...room.orders.values()].map(({ cert: _c, ...o }) => ({ ...o, walletName: settlement.nameOf(room, o.wallet) })) });
+    res.json({ rows, payers, proposals: [...room.proposals.values()], orders: [...room.orders.values()].map(({ certs: _c, ...o }) => ({ ...o, wallets: o.allocations.map((a) => ({ name: settlement.nameOf(room, a.wallet), amount: a.amountCents / 100 })) })) });
   });
 
   // ---- PayPal webhooks (payout item status). Polling covers the case with no webhook. ----

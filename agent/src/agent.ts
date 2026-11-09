@@ -7,7 +7,8 @@ import type { AgentLogEntry, AgentResult, LoadCheck, PayerAssessment } from './t
 
 export interface ExpectedLoad {
   orderId: string;
-  wallet: string;
+  wallets: string[];
+  /** Total amount of the PayPal order, in cents. */
   amountCents: number;
 }
 
@@ -60,7 +61,7 @@ export async function runSettlementAgent(opts: AgentOptions): Promise<AgentResul
     const s = summarizeOrder(await opts.orderTool.lookup(orderId));
     const matches =
       !!exp && s.status === 'COMPLETED' && (s.captureStatus ?? 'COMPLETED') === 'COMPLETED' && s.amountCents === exp.amountCents;
-    loadChecks.set(orderId, { orderId, wallet: exp?.wallet ?? '', status: s.status, amountCents: s.amountCents, matches, checkedBy: by });
+    loadChecks.set(orderId, { orderId, wallets: exp?.wallets ?? [], status: s.status, amountCents: s.amountCents, matches, checkedBy: by });
     return { ...s, expectedAmountCents: exp?.amountCents ?? null, matchesLedger: matches };
   };
 
@@ -82,7 +83,7 @@ export async function runSettlementAgent(opts: AgentOptions): Promise<AgentResul
       await checkOrder(l.orderId, 'code');
       emit('tool', `Code checked PayPal order ${l.orderId}: ${loadChecks.get(l.orderId)?.status}`);
     } catch (err) {
-      loadChecks.set(l.orderId, { orderId: l.orderId, wallet: l.wallet, status: 'LOOKUP_FAILED', amountCents: null, matches: false, checkedBy: 'code' });
+      loadChecks.set(l.orderId, { orderId: l.orderId, wallets: l.wallets, status: 'LOOKUP_FAILED', amountCents: null, matches: false, checkedBy: 'code' });
       emit('warn', `Could not check PayPal order ${l.orderId}: ${errorText(err)}`);
     }
   }

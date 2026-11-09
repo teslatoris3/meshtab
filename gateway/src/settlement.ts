@@ -84,19 +84,20 @@ export class SettlementService {
     for (const w of room.wallets.values()) names[w.publicKey] = w.name;
     const loads: Record<string, string[]> = {};
     const expectedLoads = [];
-    for (const o of room.orders.values()) {
-      if (!o.cert) continue;
-      (loads[o.wallet] ??= []).push(o.orderId);
-      expectedLoads.push({ orderId: o.orderId, wallet: o.wallet, amountCents: o.amountCents });
-    }
     const involvedPayers = new Set(report.payers.map((p) => p.payer));
+    for (const o of room.orders.values()) {
+      if (!o.certs.length) continue;
+      const wallets = o.allocations.map((a) => a.wallet);
+      for (const w of wallets) (loads[w] ??= []).push(o.orderId);
+      if (wallets.some((w) => involvedPayers.has(w))) expectedLoads.push({ orderId: o.orderId, wallets, amountCents: o.amountCents });
+    }
     const client = this.anthropic && report.payers.length > 0 && this.takeLlmBudget() ? this.anthropic : null;
     if (this.anthropic && !client && report.payers.length > 0) log('warn', 'Daily AI budget used up: rule-based assessments only.');
 
     const agent: AgentResult = await runSettlementAgent({
       report,
       directory: { names, loads },
-      expectedLoads: expectedLoads.filter((l) => involvedPayers.has(l.wallet)),
+      expectedLoads,
       orderTool: this.orderTool,
       client,
       model: this.cfg.llmModel,
@@ -108,7 +109,7 @@ export class SettlementService {
     // ---- Policy (code). The AI can only add holds. ----
     const assessment = new Map(agent.assessments.map((a) => [a.payer, a]));
     const payerReport = new Map(report.payers.map((p) => [p.payer, p]));
-    const badLoads = new Set(agent.loadChecks.filter((c) => !c.matches).map((c) => c.wallet));
+    const badLoads = new Set(agent.loadChecks.filter((c) => !c.matches).flatMap((c) => c.wallets));
     const groups = new Map<string, PayoutProposal>();
 
     for (const v of fresh) {

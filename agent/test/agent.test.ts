@@ -24,8 +24,8 @@ function scenario() {
     loads: { [alice.keys.publicKey]: ['ORDERALICE00000000'], [eve.keys.publicKey]: ['ORDEREVE0000000000'] },
   };
   const expectedLoads = [
-    { orderId: 'ORDERALICE00000000', wallet: alice.keys.publicKey, amountCents: 3000 },
-    { orderId: 'ORDEREVE0000000000', wallet: eve.keys.publicKey, amountCents: 2000 },
+    { orderId: 'ORDERALICE00000000', wallets: [alice.keys.publicKey], amountCents: 3000 },
+    { orderId: 'ORDEREVE0000000000', wallets: [eve.keys.publicKey], amountCents: 2000 },
   ];
   const orders: Record<string, unknown> = {
     ORDERALICE00000000: { id: 'ORDERALICE00000000', status: 'COMPLETED', purchase_units: [{ payments: { captures: [{ status: 'COMPLETED', amount: { value: '30.00' } }] } }] },

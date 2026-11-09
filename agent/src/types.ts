@@ -13,7 +13,8 @@ export interface PayerAssessment {
 
 export interface LoadCheck {
   orderId: string;
-  wallet: string;
+  /** Wallets funded by this order (one checkout can fund several). */
+  wallets: string[];
   /** PayPal order status as returned by the PayPal Agent Toolkit `get_order` tool. */
   status: string;
   amountCents: number | null;

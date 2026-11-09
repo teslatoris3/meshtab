@@ -3,7 +3,15 @@ import { hashOf, type LoadCert, type SettlementReport, type Voucher } from '@mes
 import type { AgentLogEntry, AgentResult } from '@meshtab/agent';
 
 export interface WalletRecord { publicKey: string; name: string; payoutEmail: string | null; createdAt: number }
-export interface OrderRecord { orderId: string; wallet: string; amountCents: number; status: string; captureId: string | null; cert: LoadCert | null; createdAt: number }
+export interface OrderRecord {
+  orderId: string;
+  allocations: { wallet: string; amountCents: number }[];
+  amountCents: number;
+  status: string;
+  captureId: string | null;
+  certs: LoadCert[];
+  createdAt: number;
+}
 export interface VoucherRecord { voucher: Voucher; hash: string; receivedAt: number; via: string }
 
 export type ProposalStatus =
@@ -111,7 +119,7 @@ export class Store {
   }
 
   certs(room: Room): LoadCert[] {
-    return [...room.orders.values()].flatMap((o) => (o.cert ? [o.cert] : []));
+    return [...room.orders.values()].flatMap((o) => o.certs);
   }
 
   private gc() {

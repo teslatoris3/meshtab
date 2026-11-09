@@ -1,6 +1,6 @@
 import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { addCert, newWallet, pay, type WalletState } from '@meshtab/protocol';
+import { addCert, newWallet, pay } from '@meshtab/protocol';
 import { mockOrderTool } from '@meshtab/agent';
 import { createApp } from '../src/app.js';
 import { loadConfig } from '../src/config.js';
@@ -47,14 +47,15 @@ describe('gateway end to end (MOCK PayPal, no LLM)', () => {
     }
 
     // Online: load balances with PayPal (Orders v2 create + capture), get signed load certificates.
-    const load = async (w: WalletState, cents: number) => {
-      const order = await api('POST', `${r}/orders`, { wallet: w.keys.publicKey, amountCents: cents });
-      const { cert } = await api('POST', `${r}/orders/${order.id}/capture`);
-      expect(cert.gateway).toBe(cfg.gatewayPublicKey);
-      return addCert(w, cert);
-    };
-    alice = await load(alice, 3000);
-    eve = await load(eve, 2000);
+    // One checkout funds two wallets (an organiser tops up several people at once).
+    const order = await api('POST', `${r}/orders`, { allocations: [
+      { wallet: alice.keys.publicKey, amountCents: 3000 }, { wallet: eve.keys.publicKey, amountCents: 2000 }] });
+    expect(order.amountCents).toBe(5000);
+    const { certs } = await api('POST', `${r}/orders/${order.id}/capture`);
+    expect(certs).toHaveLength(2);
+    expect(certs[0].gateway).toBe(cfg.gatewayPublicKey);
+    alice = addCert(alice, certs[0]);
+    eve = addCert(eve, certs[1]);
 
     // Offline: Alice pays Bob $8. Eve pays Bob $15 and then Carol $15 from the same state.
     const t = Date.now() - 60_000;
