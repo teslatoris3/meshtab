@@ -1,0 +1,31 @@
+{
+  "name": "meshtab",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Offline community payments over a Bluetooth mesh, settled with PayPal and an AI settlement agent.",
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "workspaces": [
+    "protocol",
+    "agent",
+    "gateway",
+    "web"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev": "npm run dev -w gateway",
+    "build": "npm run build -w web && npm run build -w gateway",
+    "start": "node gateway/dist/server.js"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  }
+}

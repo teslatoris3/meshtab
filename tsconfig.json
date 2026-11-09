@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": { "noEmit": true },
+  "include": ["protocol/src", "protocol/test", "agent/src", "agent/test", "gateway/src", "gateway/test"]
+}
