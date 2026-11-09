@@ -227,7 +227,8 @@ export function ruleAssessment(f: PayerFeatures): PayerAssessment {
   const parts: string[] = [];
   if (f.forkCount) {
     const k = f.forks[0]!;
-    parts.push(`${f.name} spent the same balance twice: ${usd(k.amounts[0]!)} to ${k.payees[0]} and ${usd(k.amounts[1]!)} to ${k.payees[1]}, ${k.minutesApart} minutes apart.`);
+    const gap = k.minutesApart < 1 ? 'less than a minute apart' : `${k.minutesApart} minute${k.minutesApart === 1 ? '' : 's'} apart`;
+    parts.push(`${f.name} spent the same balance twice: ${usd(k.amounts[0]!)} to ${k.payees[0]} and ${usd(k.amounts[1]!)} to ${k.payees[1]}, ${gap}.`);
   }
   if (f.uncoveredCents) parts.push(`${usd(f.uncoveredCents)} is not covered by ${f.name}'s PayPal balance and needs a human decision.`);
   if (f.chainIssues.length && !f.forkCount) parts.push(`${f.name}'s payment history does not add up.`);
