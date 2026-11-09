@@ -10,6 +10,9 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.7.0",
+    "@meshtab/agent": "*",
+    "@meshtab/protocol": "*",
     "express": "^5.3.0"
   }
 }
