@@ -10,6 +10,8 @@ export interface PayPalApi {
   readonly mode: 'sandbox' | 'mock';
   createOrder(args: { amountCents: number; customId: string; description: string; requestId: string }): Promise<CreatedOrder>;
   captureOrder(orderId: string, requestId: string): Promise<CapturedOrder>;
+  /** Sandbox only: create an order paid with PayPal's public test card. Captured in one call, no buyer login. */
+  payWithTestCard(args: { amountCents: number; customId: string; description: string; requestId: string }): Promise<CapturedOrder>;
   getOrder(orderId: string): Promise<unknown>;
   createPayout(args: { senderBatchId: string; items: PayoutItemInput[] }): Promise<PayoutBatch>;
   getPayoutBatch(batchId: string): Promise<PayoutBatch>;
@@ -76,6 +78,24 @@ export class SandboxPayPal implements PayPalApi {
       },
     }, a.requestId);
     return { id: o.id, status: o.status };
+  }
+
+  async payWithTestCard(a: { amountCents: number; customId: string; description: string; requestId: string }): Promise<CapturedOrder> {
+    const o = await this.call<any>('POST', '/v2/checkout/orders', {
+      intent: 'CAPTURE',
+      purchase_units: [
+        { custom_id: a.customId, description: a.description, amount: { currency_code: 'USD', value: toValue(a.amountCents) } },
+      ],
+      // PayPal's published sandbox test Visa. Never real card data: users cannot send a card number.
+      payment_source: {
+        card: {
+          number: '4032039317984658', expiry: '2030-12', security_code: '123', name: 'MeshTab Demo',
+          billing_address: { address_line_1: '1 Main St', admin_area_2: 'San Jose', admin_area_1: 'CA', postal_code: '95131', country_code: 'US' },
+        },
+      },
+    }, a.requestId);
+    const c = o.purchase_units?.[0]?.payments?.captures?.[0];
+    return { id: o.id, status: o.status, captureId: c?.id ?? null, captureStatus: c?.status ?? null, amountCents: toCents(c?.amount?.value) };
   }
 
   async captureOrder(orderId: string, requestId: string): Promise<CapturedOrder> {
@@ -148,6 +168,11 @@ export class MockPayPal implements PayPalApi {
     const id = this.id('MOCK');
     this.orders.set(id, { id, status: 'CREATED', amountCents: a.amountCents });
     return { id, status: 'CREATED' };
+  }
+
+  async payWithTestCard(a: { amountCents: number }): Promise<CapturedOrder> {
+    const { id } = await this.createOrder(a);
+    return this.captureOrder(id);
   }
 
   async captureOrder(orderId: string): Promise<CapturedOrder> {

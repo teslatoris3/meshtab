@@ -5,7 +5,7 @@ import { isHex, issueLoadCert, shortId, verifyVoucher, type Voucher } from '@mes
 import type { Config } from './config.js';
 import type { PayPalApi } from './paypal.js';
 import { HttpError, type SettlementService } from './settlement.js';
-import { newId, type Room, type Store } from './store.js';
+import { newId, type OrderRecord, type Room, type Store } from './store.js';
 
 export interface Deps { cfg: Config; store: Store; paypal: PayPalApi; settlement: SettlementService }
 
@@ -38,6 +38,10 @@ export function createApp({ cfg, store, paypal, settlement }: Deps) {
     const room = store.createRoom();
     res.status(201).json({ roomId: room.id });
   });
+
+  // PayPal has the money: sign one offline load certificate per funded wallet.
+  const issueCerts = (rec: OrderRecord) =>
+    rec.allocations.map((a, i) => issueLoadCert({ wallet: a.wallet, amount: a.amountCents, loadId: `${rec.orderId}-${i + 1}` }, cfg.gateway));
 
   const withRoom = (req: Request): Room => {
     const room = store.getRoom(String(req.params.room));
@@ -73,12 +77,25 @@ export function createApp({ cfg, store, paypal, settlement }: Deps) {
     }
     const amountCents = allocations.reduce((s, a) => s + a.amountCents, 0);
     const names = allocations.map((a) => room.wallets.get(a.wallet)!.name).join(', ');
-    const order = await paypal.createOrder({
+    const args = {
       amountCents,
       customId: `${room.id}:${allocations.length}`,
       description: `MeshTab offline balance: ${names}`.slice(0, 127),
       requestId: `mt-order-${newId(8)}`,
-    });
+    };
+    if (req.body?.method === 'test_card') {
+      // One call: PayPal creates and captures the order with the sandbox test card.
+      const cap = await paypal.payWithTestCard(args);
+      const rec: OrderRecord = { orderId: cap.id, allocations, amountCents, status: cap.status, captureId: cap.captureId, certs: [], createdAt: Date.now() };
+      room.orders.set(cap.id, rec);
+      if (cap.status !== 'COMPLETED' || cap.captureStatus !== 'COMPLETED' || cap.amountCents !== amountCents) {
+        throw new HttpError(402, `PayPal test-card payment not completed (${cap.status}/${cap.captureStatus})`);
+      }
+      rec.certs = issueCerts(rec);
+      res.status(201).json({ id: cap.id, status: cap.status, amountCents, certs: rec.certs, order: { id: cap.id, status: cap.status, captureId: cap.captureId } });
+      return;
+    }
+    const order = await paypal.createOrder(args);
     room.orders.set(order.id, { orderId: order.id, allocations, amountCents, status: order.status, captureId: null, certs: [], createdAt: Date.now() });
     res.status(201).json({ id: order.id, status: order.status, amountCents });
   });
@@ -95,8 +112,7 @@ export function createApp({ cfg, store, paypal, settlement }: Deps) {
       throw new HttpError(402, `PayPal capture not completed (${cap.status}/${cap.captureStatus})`);
     }
     // PayPal has the money: sign one offline load certificate per funded wallet.
-    rec.certs = rec.allocations.map((a, i) =>
-      issueLoadCert({ wallet: a.wallet, amount: a.amountCents, loadId: `${rec.orderId}-${i + 1}` }, cfg.gateway));
+    rec.certs = issueCerts(rec);
     res.json({ certs: rec.certs, order: { id: rec.orderId, status: rec.status, captureId: rec.captureId } });
   });
 

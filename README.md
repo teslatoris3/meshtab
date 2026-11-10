@@ -43,7 +43,7 @@ Guardrails:
 | PayPal product | Where |
 | --- | --- |
 | PayPal JS SDK v6 (`@paypal/react-paypal-js/sdk-v6`, `PayPalOneTimePaymentButton`) | `web/src/components/TopUp.tsx` |
-| Orders v2: create and capture | `gateway/src/paypal.ts`, `gateway/src/app.ts` |
+| Orders v2: create and capture (PayPal button), and one-call card capture with the sandbox test card | `gateway/src/paypal.ts`, `gateway/src/app.ts` |
 | Payouts: create batch, poll batch status | `gateway/src/paypal.ts`, `gateway/src/settlement.ts` |
 | Webhooks: signature verification, `PAYMENT.PAYOUTS-ITEM.*` | `gateway/src/app.ts` |
 | PayPal Agent Toolkit (`@paypal/agent-toolkit`, `get_order`) as a tool for Claude | `agent/src/paypalTools.ts` |
@@ -101,7 +101,7 @@ npm run dev -w web
    - `ANTHROPIC_API_KEY` (optional; without it the agent uses rules)
 4. Optional: create a webhook for `PAYMENT.PAYOUTS-ITEM.*` that points to `https://<host>/api/webhooks/paypal`, and set `PAYPAL_WEBHOOK_ID`. Without it, the gateway polls the payout batch.
 
-**Sandbox buyer account for judges:** TODO (email / password of a sandbox personal account, sandbox only)
+**Judges need no PayPal login.** In the Mesh Lab, click **"Pay with a PayPal sandbox test card (no login)"**. The gateway creates and captures a real PayPal sandbox order (Orders v2, `payment_source.card`) with PayPal's published sandbox test Visa. The card number is fixed in the server code, and the app never accepts card data from users. The normal PayPal button is shown as well.
 
 ## Environment variables
 
@@ -126,6 +126,9 @@ Secrets come only from environment variables. `.env` is in `.gitignore`.
 Create a Blueprint from this repository (`render.yaml`), then set the secret variables in the dashboard. The build runs `npm ci --include=dev && npm run build`. The service serves the API and the web app on one port. The health check is `/healthz`.
 
 ## Tests
+
+Real sandbox smoke test (Orders v2, Agent Toolkit `get_order`, Payouts): `npx tsx --env-file=.env scripts/sandbox-smoke.ts`
+
 
 ```bash
 npm test

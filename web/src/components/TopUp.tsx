@@ -34,6 +34,21 @@ export function TopUp({ cfg, room, engine, onDone }: {
     onDone();
   };
 
+  const payByCard = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await api.payWithTestCard(room, allocations);
+      engine.log('paypal', `PayPal order ${r.id} paid with a sandbox test card and captured (${r.order.status}). The money is held in escrow.`);
+      engine.addCerts(r.certs);
+      onDone();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div>
       <div className="hint">
@@ -41,6 +56,14 @@ export function TopUp({ cfg, room, engine, onDone }: {
         {Object.entries(TOPUP).map(([id, c]) => `${engine.node(id).name} ${money(c)}`).join(', ')}.
       </div>
       {disabled && <div className="hint">Turn the internet on to pay with PayPal.</div>}
+      {cfg.paypalMode === 'sandbox' && (
+        <div style={{ marginBottom: 10 }}>
+          <button className="btn primary" disabled={disabled || busy} onClick={payByCard}>
+            {busy ? 'Paying...' : `Pay ${money(total)} with a PayPal sandbox test card (no login)`}
+          </button>
+          <div className="hint" style={{ marginTop: 6 }}>Real PayPal sandbox order, created and captured in one call. Or use the PayPal button below:</div>
+        </div>
+      )}
       {cfg.paypalMode === 'sandbox' && cfg.paypalClientId ? (
         <div style={{ maxWidth: 320, opacity: disabled ? 0.5 : 1, pointerEvents: disabled ? 'none' : 'auto' }}>
           <PayPalProvider clientId={cfg.paypalClientId} environment="sandbox" components={['paypal-payments']} pageType="checkout">
@@ -54,7 +77,7 @@ export function TopUp({ cfg, room, engine, onDone }: {
               onCancel={() => setError('Checkout cancelled.')}
             />
           </PayPalProvider>
-          <div className="hint" style={{ marginTop: 6 }}>PayPal sandbox only. Log in with the sandbox buyer account from the README.</div>
+          <div className="hint" style={{ marginTop: 6 }}>Needs a PayPal sandbox buyer login.</div>
         </div>
       ) : (
         <button

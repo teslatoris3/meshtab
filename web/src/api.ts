@@ -48,6 +48,9 @@ export const api = {
     call('POST', `/api/rooms/${room}/wallets`, w),
   createOrder: (room: string, allocations: { wallet: string; amountCents: number }[]) =>
     call<{ id: string; amountCents: number }>('POST', `/api/rooms/${room}/orders`, { allocations }),
+  payWithTestCard: (room: string, allocations: { wallet: string; amountCents: number }[]) =>
+    call<{ id: string; amountCents: number; certs: LoadCert[]; order: { id: string; status: string; captureId?: string } }>(
+      'POST', `/api/rooms/${room}/orders`, { allocations, method: 'test_card' }),
   capture: (room: string, orderId: string) =>
     call<{ certs: LoadCert[]; order: { id: string; status: string; captureId?: string } }>('POST', `/api/rooms/${room}/orders/${orderId}/capture`),
   sync: (room: string, vouchers: Voucher[], via: string) =>
