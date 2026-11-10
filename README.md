@@ -4,7 +4,7 @@
 
 People load a balance with **PayPal** while they are online. When the internet is down, they pay each other with signed vouchers that hop phone to phone over a Bluetooth mesh. When any phone is back online, an **AI settlement agent** (Anthropic Claude + the PayPal Agent Toolkit) checks the vouchers, explains every risk in plain language, and pays the receivers with **PayPal Payouts**. A person approves anything risky.
 
-- Live demo (no install, no login): **TODO: Render URL**
+- Live demo (no install, no login): **https://vertexofagents.com/meshtab/**
 - Demo video: **TODO: YouTube URL**
 - License: GPL-3.0
 
@@ -122,9 +122,11 @@ npm run dev -w web
 
 Secrets come only from environment variables. `.env` is in `.gitignore`.
 
-## Deploy on Render
+## Deploy
 
-Create a Blueprint from this repository (`render.yaml`), then set the secret variables in the dashboard. The build runs `npm ci --include=dev && npm run build`. The service serves the API and the web app on one port. The health check is `/healthz`.
+The live demo runs on a small Linux VPS: one Node process (`HOST=127.0.0.1`, systemd) behind nginx, served under `/meshtab/` (the web app uses relative URLs, so any path works).
+
+Alternative, not used for the live demo: create a Render Blueprint from this repository (`render.yaml`), then set the secret variables in the dashboard. The build runs `npm ci --include=dev && npm run build`. The service serves the API and the web app on one port. The health check is `/healthz`.
 
 ## Tests
 
@@ -149,4 +151,4 @@ New in this project: the payment voucher protocol, the load certificates, fork p
 
 ## Built with
 
-PayPal Orders v2 · PayPal Payouts · PayPal Webhooks · PayPal JS SDK v6 · PayPal Agent Toolkit · Anthropic Claude (Claude Opus 5.5) · Anthropic TypeScript SDK · TypeScript · Node.js · Express · React · Vite · AG Grid · @noble/ed25519 · Render
+PayPal Orders v2 · PayPal Payouts · PayPal Webhooks · PayPal JS SDK v6 · PayPal Agent Toolkit · Anthropic Claude (Claude Opus 5.5) · Anthropic TypeScript SDK · TypeScript · Node.js · Express · React · Vite · AG Grid · @noble/ed25519 · nginx

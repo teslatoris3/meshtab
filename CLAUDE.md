@@ -29,7 +29,7 @@ a human approves risky payouts. **Code decides validity. The LLM only scores ris
 - `agent/` DONE. Claude tool loop (Anthropic SDK `toolRunner`), PayPal Agent Toolkit `get_order`, `record_assessment` tool, rule fallback. `client.ts` picks OpenRouter or Anthropic. 3 tests.
 - `gateway/` DONE. Express: Orders v2 (button flow AND one-call sandbox test-card flow), Payouts + polling, webhook verify, settlement policy, MOCK mode, rate limits. 2 e2e tests.
 - `web/` DONE. React Mesh Lab (simulated mesh, internet toggle, Evil Eve, PayPal button + "test card, no login" button, settlement panel with Approve), AG Grid ledger console (lazy loaded). Phone layout OK.
-- `docs/architecture.md`, `README.md`, `render.yaml` DONE. README has TODOs: Render URL, YouTube URL, Android section.
+- `docs/architecture.md`, `README.md`, `render.yaml` DONE. README has TODOs: YouTube URL, Android section.
 - `scripts/sandbox-smoke.ts` and `scripts/agent-smoke.ts`: real PayPal sandbox and real Claude checks.
 - `android/` NOT STARTED.
 
@@ -62,9 +62,13 @@ Sandbox business account (sends payouts): sb-hw243b53667188@business.example.com
 
 ## Open work, in order
 1. DONE 10 Nov: order-split fix verified live (above).
-2. **Render deploy** (Amir does it): Blueprint from this repo; set the secret env vars in the Render dashboard; use a paid instance so it does not sleep. He sends me the URL. Then test the live URL end to end and put it in README.
+2. DONE 10 Nov: live demo at https://vertexofagents.com/meshtab/ on trader-vps (USA), NOT Render. systemd `meshtab.service` (user `meshtab`,
+   /opt/meshtab/app, secrets /etc/meshtab.env root 0600, 127.0.0.1:8787, MemoryMax 512M) behind nginx `location /meshtab/` in
+   /etc/nginx/sites-enabled/vertexofagents (Cloudflare -> origin 8443). Update: `ssh trader-vps` then
+   `sudo -u meshtab -H bash -c 'cd /opt/meshtab/app && git pull && npm ci --include=dev && npm run build' && sudo systemctl restart meshtab`.
+   Verified live end to end: sandbox order, Evil Eve, Claude (Alice ok to pay), Payouts SUCCESS, AG Grid console.
 3. **Android** (`android/`): copy upstream https://github.com/permissionlesstech/bitchat-android at commit 14ab73c. Add `PAYMENT_VOUCHER(0x30u)` to `MessageType` in `app/src/main/java/com/bitchat/android/protocol/BinaryProtocol.kt` (existing: 0x01,0x02,0x03,0x10,0x11,0x20,0x21,0x22,0x29). Port the canonical voucher/LoadCert format from `protocol/src/voucher.ts` (test vector in `protocol/test/protocol.test.ts`), add `/pay @nick 5.00`, a wallet screen, a sync step. Stack: AGP 9.3.1, Kotlin 2.4.10, compileSdk/targetSdk 37, minSdk 26. Amir has Android Studio, Ubuntu 20.04, 2 phones. **Cut Android FIRST if late**; then the video shows Mesh Lab on a phone browser. Update README "what is new vs upstream".
-4. Devpost text, README TODOs, video (outline: 0:00 problem, 0:20 PayPal load, 0:45 internet off + mesh pay, 1:15 Evil Eve, 1:35 AI agent + payouts, 2:10 PayPal dashboard shows money, 2:30 impact + new vs Bitchat). Under 3 minutes. Select AG Grid and Render on the Devpost form (both really used).
+4. Devpost text, README TODOs, video (outline: 0:00 problem, 0:20 PayPal load, 0:45 internet off + mesh pay, 1:15 Evil Eve, 1:35 AI agent + payouts, 2:10 PayPal dashboard shows money, 2:30 impact + new vs Bitchat). Under 3 minutes. Select AG Grid on the Devpost form. Do NOT select Render: the demo is not hosted there.
 5. Final checklist: repo public + GPL in About (Amir must set the About description/topics by hand), README complete, demo URL works with no login, video public on YouTube, nothing changed after the deadline.
 
 Never cut: protocol, gateway, agent, Mesh Lab.
