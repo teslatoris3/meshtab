@@ -98,7 +98,7 @@ npm run dev -w web
    - `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_MODE=sandbox`
    - `DEMO_PAYOUT_RECEIVERS=Bob=<sandbox email>,Carol=<sandbox email>,Dave=<sandbox email>`
    - `GATEWAY_SECRET_KEY` (64 hex characters: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`)
-   - `ANTHROPIC_API_KEY` (optional; without it the agent uses rules)
+   - `OPENROUTER_API_KEY` or `ANTHROPIC_API_KEY` (optional; without one the agent uses rules)
 4. Optional: create a webhook for `PAYMENT.PAYOUTS-ITEM.*` that points to `https://<host>/api/webhooks/paypal`, and set `PAYPAL_WEBHOOK_ID`. Without it, the gateway polls the payout batch.
 
 **Judges need no PayPal login.** In the Mesh Lab, click **"Pay with a PayPal sandbox test card (no login)"**. The gateway creates and captures a real PayPal sandbox order (Orders v2, `payment_source.card`) with PayPal's published sandbox test Visa. The card number is fixed in the server code, and the app never accepts card data from users. The normal PayPal button is shown as well.
@@ -112,8 +112,9 @@ npm run dev -w web
 | `PAYPAL_WEBHOOK_ID` | empty | Enables webhook verification. |
 | `DEMO_PAYOUT_RECEIVERS` | empty | `Name=email,...` payout receivers for the demo characters. |
 | `GATEWAY_SECRET_KEY` | random at boot | Ed25519 key that signs load certificates. Set it so certificates survive restarts. |
-| `ANTHROPIC_API_KEY` | empty | Enables the Claude agent. |
-| `LLM_MODEL` | `claude-opus-5-5` | Claude model. |
+| `OPENROUTER_API_KEY` | empty | Enables the Claude agent through OpenRouter. Wins if both keys are set. |
+| `ANTHROPIC_API_KEY` | empty | Enables the Claude agent through the Anthropic API. |
+| `LLM_MODEL` | `anthropic/claude-opus-5.5` (OpenRouter) or `claude-opus-5-5` (Anthropic) | Claude model. |
 | `LLM_EFFORT` | `low` | `low`, `medium` or `high`. |
 | `LLM_RUNS_PER_DAY` | `300` | AI budget for the public demo. After that: rules. |
 | `APPROVAL_LIMIT_CENTS` | `2500` | Payouts above this always need a human. |

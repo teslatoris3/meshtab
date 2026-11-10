@@ -25,10 +25,11 @@ services:
         sync: false
       - key: GATEWAY_SECRET_KEY
         sync: false
+      # Set ONE of the two keys. The model follows the key (OpenRouter: anthropic/claude-opus-5.5).
+      - key: OPENROUTER_API_KEY
+        sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
-      - key: LLM_MODEL
-        value: claude-opus-5-5
       - key: LLM_EFFORT
         value: low
       - key: LLM_RUNS_PER_DAY

@@ -36,11 +36,12 @@ a human approves risky payouts. **Code decides validity. The LLM only scores ris
 Verified for real (not mocks) on 10 Nov: sandbox Orders v2 create+capture ($65 COMPLETED), Agent Toolkit get_order, Payouts reached SUCCESS,
 real Claude (anthropic/claude-opus-5.5 via OpenRouter) called get_order and record_assessment, full browser demo had no errors.
 
-## Last change not yet verified (do this first)
-In `agent/src/agent.ts` and `gateway/src/settlement.ts` I started passing the full PayPal order split (`allocations`) to Claude as `paypal_orders`,
-and told it to write plain text (no markdown). Reason: Claude wrongly put Alice on hold because one $65 order funded three wallets
-(Alice $30, Dave $15, Eve $20) and it only saw two of them. Typecheck and 20 tests pass. **Not yet re-run live.**
-Re-run: `npm run build`, start the server (see Run), run the browser walk, check Alice is "ok to pay" and the summary has no `**`.
+## Order-split fix: verified live on 10 Nov
+`agent/src/agent.ts` and `gateway/src/settlement.ts` pass the full PayPal order split (`allocations`) to Claude as `paypal_orders`,
+and tell it to write plain text (no markdown). Reason: Claude wrongly put Alice on hold because one $65 order funded three wallets
+(Alice $30, Dave $15, Eve $20) and it only saw two of them.
+Verified: two full browser walks, real PayPal sandbox + real Claude (anthropic/claude-opus-5.5 via OpenRouter). Both times Alice "ok to pay" (risk 3),
+Eve "hold" (risk 90), no `**`, 0 console errors. Minor wording nit left as is: Claude says Eve paid Bob and Carol "at the same moment".
 
 ## Run
 ```bash
@@ -60,7 +61,7 @@ These were pasted in a chat. After the hackathon: regenerate the PayPal secret a
 Sandbox business account (sends payouts): sb-hw243b53667188@business.example.com. Amir cannot log in to paypal.com (forced password reset loop), so never ask him to.
 
 ## Open work, in order
-1. Verify the last change (above).
+1. DONE 10 Nov: order-split fix verified live (above).
 2. **Render deploy** (Amir does it): Blueprint from this repo; set the secret env vars in the Render dashboard; use a paid instance so it does not sleep. He sends me the URL. Then test the live URL end to end and put it in README.
 3. **Android** (`android/`): copy upstream https://github.com/permissionlesstech/bitchat-android at commit 14ab73c. Add `PAYMENT_VOUCHER(0x30u)` to `MessageType` in `app/src/main/java/com/bitchat/android/protocol/BinaryProtocol.kt` (existing: 0x01,0x02,0x03,0x10,0x11,0x20,0x21,0x22,0x29). Port the canonical voucher/LoadCert format from `protocol/src/voucher.ts` (test vector in `protocol/test/protocol.test.ts`), add `/pay @nick 5.00`, a wallet screen, a sync step. Stack: AGP 9.3.1, Kotlin 2.4.10, compileSdk/targetSdk 37, minSdk 26. Amir has Android Studio, Ubuntu 20.04, 2 phones. **Cut Android FIRST if late**; then the video shows Mesh Lab on a phone browser. Update README "what is new vs upstream".
 4. Devpost text, README TODOs, video (outline: 0:00 problem, 0:20 PayPal load, 0:45 internet off + mesh pay, 1:15 Evil Eve, 1:35 AI agent + payouts, 2:10 PayPal dashboard shows money, 2:30 impact + new vs Bitchat). Under 3 minutes. Select AG Grid and Render on the Devpost form (both really used).
