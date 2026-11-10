@@ -169,7 +169,7 @@ function Lab({ cfg, room, engine }: { cfg: ServerConfig; room: string; engine: M
     <>
       <header className="top">
         <div className="brand">
-          <img src="/icon.svg" width={28} height={28} alt="" />
+          <img src="icon.svg" width={28} height={28} alt="" />
           MeshTab <small>offline community payments</small>
         </div>
         <nav className="tabs" role="tablist">
