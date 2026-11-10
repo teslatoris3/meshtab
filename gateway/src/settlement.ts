@@ -89,7 +89,7 @@ export class SettlementService {
       if (!o.certs.length) continue;
       const wallets = o.allocations.map((a) => a.wallet);
       for (const w of wallets) (loads[w] ??= []).push(o.orderId);
-      if (wallets.some((w) => involvedPayers.has(w))) expectedLoads.push({ orderId: o.orderId, wallets, amountCents: o.amountCents });
+      if (wallets.some((w) => involvedPayers.has(w))) expectedLoads.push({ orderId: o.orderId, wallets, amountCents: o.amountCents, allocations: o.allocations });
     }
     const client = this.anthropic && report.payers.length > 0 && this.takeLlmBudget() ? this.anthropic : null;
     if (this.anthropic && !client && report.payers.length > 0) log('warn', 'Daily AI budget used up: rule-based assessments only.');

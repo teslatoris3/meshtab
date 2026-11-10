@@ -10,6 +10,8 @@ export interface ExpectedLoad {
   wallets: string[];
   /** Total amount of the PayPal order, in cents. */
   amountCents: number;
+  /** How the order was split between wallets (one checkout can fund several people). */
+  allocations?: { wallet: string; amountCents: number }[];
 }
 
 export interface AgentOptions {
@@ -38,6 +40,8 @@ Rules for assessments:
 - Recommend "hold" when there is a double-spend fork, an escrow shortfall, a running-total lie, a PayPal load that does not match, or a pattern you think a careful human should check. Otherwise recommend "pay".
 - Your recommendation can only add caution. A "hold" sends the payout to a human. A "pay" does not override the code or the approval limit.
 - Write each explanation for a non-technical community organiser: at most 3 short sentences, use the people's names, write amounts in dollars, no jargon such as "hash" or "seq".
+- One PayPal order can fund several wallets. paypal_orders lists every funded wallet, including people who made no payments. Compare the order total with the sum of all its funded amounts.
+- Write plain text only. No markdown, no asterisks, no bullet lists.
 - Be fair to honest payees. When one payer cheats, say clearly that the people who received the money did nothing wrong.
 - The baseline risk and flags in the input come from simple rules. Use them as a starting point, not as the answer.`;
 
@@ -161,7 +165,16 @@ async function runLlm(
     },
   });
 
+  const nameOf = (key: string) => opts.directory.names[key] ?? shortId(key);
   const input = {
+    paypal_orders: opts.expectedLoads.map((l) => ({
+      order_id: l.orderId,
+      total_usd: usd(l.amountCents),
+      funded: (l.allocations ?? l.wallets.map((w) => ({ wallet: w, amountCents: NaN }))).map((a) => ({
+        name: nameOf(a.wallet),
+        usd: Number.isNaN(a.amountCents) ? 'unknown' : usd(a.amountCents),
+      })),
+    })),
     payers: features.map((f) => ({
       payer_id: shortId(f.payer),
       name: f.name,

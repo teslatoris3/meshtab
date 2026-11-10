@@ -29,7 +29,7 @@ export function createApp({ cfg, store, paypal, settlement }: Deps) {
       gatewayPublicKey: cfg.gateway.publicKey,
       approvalLimitCents: cfg.approvalLimitCents,
       maxLoadCents: cfg.maxLoadCents,
-      ai: { enabled: cfg.anthropicConfigured, model: cfg.anthropicConfigured ? cfg.llmModel : null, provider: 'Anthropic Claude' },
+      ai: { enabled: cfg.anthropicConfigured, model: cfg.anthropicConfigured ? cfg.llmModel : null, provider: cfg.llmProvider === 'openrouter' ? 'Anthropic Claude via OpenRouter' : 'Anthropic Claude' },
       demoReceivers: cfg.demoReceivers,
     });
   });

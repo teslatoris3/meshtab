@@ -10,6 +10,7 @@ export interface Config {
   approvalLimitCents: number;
   maxLoadCents: number;
   anthropicConfigured: boolean;
+  llmProvider: 'anthropic' | 'openrouter';
   llmModel: string;
   llmEffort: 'low' | 'medium' | 'high';
   llmRunsPerDay: number;
@@ -44,8 +45,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     gateway,
     approvalLimitCents: Number(env.APPROVAL_LIMIT_CENTS ?? 2500),
     maxLoadCents: Number(env.MAX_LOAD_CENTS ?? 10000),
-    anthropicConfigured: !!(env.ANTHROPIC_API_KEY?.trim() || env.ANTHROPIC_AUTH_TOKEN?.trim()),
-    llmModel: env.LLM_MODEL?.trim() || 'claude-opus-5-5',
+    anthropicConfigured: !!(env.ANTHROPIC_API_KEY?.trim() || env.OPENROUTER_API_KEY?.trim()),
+    llmProvider: env.OPENROUTER_API_KEY?.trim() ? 'openrouter' : 'anthropic',
+    llmModel: env.LLM_MODEL?.trim() || (env.OPENROUTER_API_KEY?.trim() ? 'anthropic/claude-opus-5.5' : 'claude-opus-5-5'),
     llmEffort: effort === 'medium' || effort === 'high' ? effort : 'low',
     llmRunsPerDay: Number(env.LLM_RUNS_PER_DAY ?? 300),
     demoReceivers: parseReceivers(env.DEMO_PAYOUT_RECEIVERS),
