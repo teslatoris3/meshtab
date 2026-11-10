@@ -18,7 +18,7 @@ const store = new Store();
 const settlement = new SettlementService(cfg, store, paypal, orderTool, anthropic);
 const app = createApp({ cfg, store, paypal, settlement });
 
-app.listen(cfg.port, () => {
+app.listen(cfg.port, process.env.HOST ?? '0.0.0.0', () => { // HOST=127.0.0.1 behind a reverse proxy
   console.log(`[gateway] MeshTab listening on :${cfg.port}`);
   console.log(`[gateway] PayPal: ${paypal.mode}${paypal.mode === 'mock' ? ' (set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET for sandbox)' : ''}`);
   console.log(`[gateway] AI: ${anthropic ? `${cfg.llmModel} via ${cfg.llmProvider} (effort ${cfg.llmEffort})` : 'off (set ANTHROPIC_API_KEY); rule-based fallback'}`);
