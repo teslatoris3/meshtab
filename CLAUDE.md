@@ -69,7 +69,7 @@ Sandbox business account (sends payouts): sb-hw243b53667188@business.example.com
    Verified live end to end: sandbox order, Evil Eve, Claude (Alice ok to pay), Payouts SUCCESS, AG Grid console.
 3. **Android** (`android/`): copy upstream https://github.com/permissionlesstech/bitchat-android at commit 14ab73c. Add `PAYMENT_VOUCHER(0x30u)` to `MessageType` in `app/src/main/java/com/bitchat/android/protocol/BinaryProtocol.kt` (existing: 0x01,0x02,0x03,0x10,0x11,0x20,0x21,0x22,0x29). Port the canonical voucher/LoadCert format from `protocol/src/voucher.ts` (test vector in `protocol/test/protocol.test.ts`), add `/pay @nick 5.00`, a wallet screen, a sync step. Stack: AGP 9.3.1, Kotlin 2.4.10, compileSdk/targetSdk 37, minSdk 26. Amir has Android Studio, Ubuntu 20.04, 2 phones. **Cut Android FIRST if late**; then the video shows Mesh Lab on a phone browser. Update README "what is new vs upstream".
 4. Devpost text, README TODOs, video (outline: 0:00 problem, 0:20 PayPal load, 0:45 internet off + mesh pay, 1:15 Evil Eve, 1:35 AI agent + payouts, 2:10 PayPal dashboard shows money, 2:30 impact + new vs Bitchat). Under 3 minutes. Select AG Grid on the Devpost form. Do NOT select Render: the demo is not hosted there.
-5. Final checklist: repo public + GPL in About (Amir must set the About description/topics by hand), README complete, demo URL works with no login, video public on YouTube, nothing changed after the deadline.
+5. Final checklist: repo public + GPL in About (DONE 10 Nov via gh: description, homepage = live demo, topics), README complete, demo URL works with no login, video public on YouTube, nothing changed after the deadline.
 
 Never cut: protocol, gateway, agent, Mesh Lab.
 
