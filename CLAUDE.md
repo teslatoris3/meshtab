@@ -29,7 +29,7 @@ a human approves risky payouts. **Code decides validity. The LLM only scores ris
 - `agent/` DONE. Claude tool loop (Anthropic SDK `toolRunner`), PayPal Agent Toolkit `get_order`, `record_assessment` tool, rule fallback. `client.ts` picks OpenRouter or Anthropic. 3 tests.
 - `gateway/` DONE. Express: Orders v2 (button flow AND one-call sandbox test-card flow), Payouts + polling, webhook verify, settlement policy, MOCK mode, rate limits. 2 e2e tests.
 - `web/` DONE. React Mesh Lab (simulated mesh, internet toggle, Evil Eve, PayPal button + "test card, no login" button, settlement panel with Approve), AG Grid ledger console (lazy loaded). Phone layout OK.
-- `docs/architecture.md`, `README.md`, `render.yaml` DONE. README has TODOs: YouTube URL, Android section.
+- `docs/architecture.md`, `README.md`, `render.yaml` DONE. README has TODO: Android section. Video: https://youtu.be/CPfnZuCioaA (Amir must set it Public or Unlisted).
 - `scripts/sandbox-smoke.ts` and `scripts/agent-smoke.ts`: real PayPal sandbox and real Claude checks.
 - `android/` NOT STARTED.
 

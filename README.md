@@ -5,7 +5,7 @@
 People load a balance with **PayPal** while they are online. When the internet is down, they pay each other with signed vouchers that hop phone to phone over a Bluetooth mesh. When any phone is back online, an **AI settlement agent** (Anthropic Claude + the PayPal Agent Toolkit) checks the vouchers, explains every risk in plain language, and pays the receivers with **PayPal Payouts**. A person approves anything risky.
 
 - Live demo (no install, no login): **https://vertexofagents.com/meshtab/**
-- Demo video: **TODO: YouTube URL**
+- Demo video: **https://youtu.be/CPfnZuCioaA**
 - License: GPL-3.0
 
 > Sandbox only. MeshTab never touches live money. The gateway refuses `PAYPAL_MODE=live`.
