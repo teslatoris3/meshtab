@@ -16,12 +16,14 @@ export interface OrderTool {
  * can call it. The toolkit owns the PayPal auth and the HTTP call; we only adapt the schema.
  */
 export function payPalToolkitOrderTool(opts: { clientId: string; clientSecret: string; sandbox: boolean }): OrderTool {
-  const toolkit = new PayPalAgentToolkit({
+  // ponytail: a new toolkit for every lookup. Toolkit 1.11.0 fetches its OAuth token once and never renews it,
+  // and PayPal tokens expire after about 9 hours (a long-running server then gets 401). Cost: one OAuth call per lookup.
+  const getOrder = () => new PayPalAgentToolkit({
     clientId: opts.clientId,
     clientSecret: opts.clientSecret,
     configuration: { actions: { orders: { get: true } }, context: { sandbox: opts.sandbox } },
-  });
-  const tool = toolkit.getTools()['get_order'];
+  }).getTools()['get_order'];
+  const tool = getOrder();
   if (!tool?.execute) throw new Error('PayPal Agent Toolkit did not expose get_order');
   const { $schema: _ignored, ...schema } = zodToJsonSchema(tool.parameters as never) as Record<string, unknown>;
   return {
@@ -29,7 +31,7 @@ export function payPalToolkitOrderTool(opts: { clientId: string; clientSecret: s
     description: (tool.description ?? 'Retrieve a PayPal order by ID.').trim(),
     inputSchema: schema as OrderTool['inputSchema'],
     lookup: async (orderId) => {
-      const out = await tool.execute!({ id: orderId }, { toolCallId: `meshtab-${orderId}`, messages: [] });
+      const out = await getOrder()!.execute!({ id: orderId }, { toolCallId: `meshtab-${orderId}`, messages: [] });
       return typeof out === 'string' ? safeJson(out) : out;
     },
   };
