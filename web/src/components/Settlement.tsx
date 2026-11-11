@@ -97,6 +97,8 @@ export function Settlement({ cfg, room, runId, onFinished }: {
       <div className="hint">
         {run.model ? (
           <>AI agent: <b>{run.model}</b> (Anthropic Claude) with the PayPal Agent Toolkit. </>
+        ) : run.status === 'running' ? (
+          <>AI settlement agent is running. </> // run.model is only known when the run ends
         ) : (
           <>AI agent offline: rule-based explanations. </>
         )}
