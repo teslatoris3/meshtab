@@ -76,5 +76,7 @@ Never cut: protocol, gateway, agent, Mesh Lab.
 ## Notes and known limits
 - Git author on old commits is a placeholder ("Amir"). Offer to rewrite if Amir sends his GitHub noreply email.
 - The Agent Toolkit has no Payouts tool, so payouts use the REST API from the gateway (README says so).
+- Agent Toolkit 1.11.0 caches its OAuth token forever; PayPal tokens expire after ~9 h, then get_order returns status 401
+  (Claude holds everyone, no payouts). Fixed 11 Nov in `agent/src/paypalTools.ts`: a new toolkit per lookup. Keep it that way.
 - An offline system cannot stop a double-spend at the moment it happens. MeshTab limits, detects, settles from escrow, freezes the payer. Say this honestly in the video and Devpost text.
 - Eligibility: Amir is a Maltese resident, eligible. Prize payout needs W-8BEN and a bank account.
